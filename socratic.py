@@ -1,8 +1,12 @@
 import re
 from groq import Groq
 
-from config import GROQ_API_KEY, REASONING_MODEL, CONTEXT_WINDOW, MODES
-from dialogue import Session, Move, MOVE_LABELS
+try:
+	from .config import GROQ_API_KEY, REASONING_MODEL, CONTEXT_WINDOW, MODES
+	from .dialogue import Session, Move, MOVE_LABELS
+except ImportError:
+	from config import GROQ_API_KEY, REASONING_MODEL, CONTEXT_WINDOW, MODES
+	from dialogue import Session, Move, MOVE_LABELS
 
 # System prompts - one per mode
 BASE_RULES = """
@@ -100,7 +104,7 @@ class SocraticEngine:
 		raw = re.sub(r'<think>.*', '', raw, flags=re.DOTALL)
 		return raw.strip()
 
-	def _select_move(self, session: Session) -> Move:
+	def _select_move(self, session: Session) -> str:
 		"""Ask the LLM which Socratic move to make next, steering away from recent repeats."""
 		history_text = "\n".join(
 		f"Engine: {e.challenge}\nUser: {e.response or '[no response yet]'}"
@@ -130,7 +134,7 @@ Which move should come next?"""
 
 		raw = self._call(messages, max_tokens=50).lower().strip()
 
-		valid: list[Move] = ["clarify", "assumption", "counterexample", "evidence", "implication", "steelman"]
+		valid: list[str] = ["clarify", "assumption", "counterexample", "evidence", "implication", "steelman"]
 		for move in valid:
 			if move in raw:
 				return move
@@ -141,7 +145,7 @@ Which move should come next?"""
 				return move
 		return "assumption"
 
-	def challenge(self, session: Session, graph_context: str = "") -> tuple[Move, str]:
+	def challenge(self, session: Session, graph_context: str = "") -> tuple[str, str]:
 		move   = self._select_move(session)
 		system = MODE_PROMPTS.get(session.mode, MODE_PROMPTS["rigorous"])
 
@@ -204,7 +208,7 @@ Be precise and fair. This is not praise - it is an honest intellectual assessmen
 		session.cache_summary(result)
 		return result
 
-	def opening_challenge(self, session: Session) -> tuple[Move, str]:
+	def opening_challenge(self, session: Session) -> tuple[str, str]:
 		system = MODE_PROMPTS.get(session.mode, MODE_PROMPTS["rigorous"])
 
 		messages = [

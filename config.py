@@ -20,4 +20,4 @@ DEFAULT_MODE = "rigorous"
 DATA_DIR = Path("data")
 SESSIONS_FILE = DATA_DIR / "sessions.pkl"
 
-VERSION = "1.0"
+VERSION = "1.1"

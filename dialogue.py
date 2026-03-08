@@ -2,11 +2,14 @@ import pickle
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeAlias
 
-from config import SESSIONS_FILE, DATA_DIR
+try:
+	from .config import SESSIONS_FILE, DATA_DIR
+except ImportError:
+	from config import SESSIONS_FILE, DATA_DIR
 
-Move = Literal["clarify", "assumption", "counterexample", "evidence", "implication", "steelman"]
+Move: TypeAlias = Literal["clarify", "assumption", "counterexample", "evidence", "implication", "steelman"]
 
 MOVE_LABELS = {
 	"clarify":        "Clarification",
@@ -73,21 +76,15 @@ class Session:
 		return ", ".join(f"{m} ×{c}" for m, c in counts.items())
 
 	def get_cached_summary(self) -> str | None:
-		"""Return cached summary if it's still valid, otherwise None."""
 		if self._cached_summary and self._summary_exchange_count == len(self.exchanges):
 			return self._cached_summary
 		return None
 
 	def cache_summary(self, summary: str):
-		"""Store a summary and record how many exchanges it covers."""
 		self._cached_summary = summary
 		self._summary_exchange_count = len(self.exchanges)
 
 	def history_for_llm(self, max_exchanges: int = 12) -> list[dict]:
-		"""
-		Format exchange history as role/content dicts for the LLM.
-		Only includes the most recent max_exchanges to stay within context.
-		"""
 		messages = []
 		for ex in self.exchanges[-max_exchanges:]:
 			messages.append({
@@ -115,7 +112,7 @@ class Session:
 		)
 
 	def to_markdown(self) -> str:
-		"""Export the full session as readable markdown."""
+		#Export the full session as readable markdown.
 		lines = [
 			f"# Socratic Dialogue",
 			f"",
@@ -164,18 +161,19 @@ class Session:
 
 
 class SessionStore:
-	def __init__(self):
+	def __init__(self, sessions_file=None):
+		self.sessions_file = sessions_file or SESSIONS_FILE
 		DATA_DIR.mkdir(exist_ok=True)
 		self._sessions: dict[str, Session] = {}
 		self._load()
 
 	def _load(self):
-		if SESSIONS_FILE.exists():
-			with open(SESSIONS_FILE, "rb") as f:
+		if self.sessions_file.exists():
+			with open(self.sessions_file, "rb") as f:
 				self._sessions = pickle.load(f)
 
 	def _save(self):
-		with open(SESSIONS_FILE, "wb") as f:
+		with open(self.sessions_file, "wb") as f:
 			pickle.dump(self._sessions, f)
 
 	def new_session(self, thesis: str, mode: str) -> Session:

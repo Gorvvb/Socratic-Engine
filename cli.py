@@ -12,9 +12,14 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from config import VERSION, MODES, DEFAULT_MODE, DATA_DIR
-from dialogue import SessionStore, Session
-from socratic import SocraticEngine, MOVE_LABELS
+try:
+	from .config import VERSION, MODES, DEFAULT_MODE, DATA_DIR
+	from .dialogue import SessionStore, Session
+	from .socratic import SocraticEngine, MOVE_LABELS
+except ImportError:
+	from config import VERSION, MODES, DEFAULT_MODE, DATA_DIR
+	from dialogue import SessionStore, Session
+	from socratic import SocraticEngine, MOVE_LABELS
 
 console = Console()
 
